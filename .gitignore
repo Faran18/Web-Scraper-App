@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Models
+backend/models/embeddings/
+
+# Data / Vector DB
+data/
+
+# Virtual environment
+venv/
+
+tempCodeRunnerFile.py
+
+.env
+
+*.bak
