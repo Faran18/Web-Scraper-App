@@ -1,27 +1,27 @@
 # backend/core/llm_service.py
 
-from openai import OpenAI
+from groq import Groq
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # ========================================
-# OPENAI CONFIGURATION
+# GROQ CONFIGURATION
 # ========================================
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL_NAME = "gpt-5-nano-2025-08-07"  # GPT-5-nano
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+MODEL_NAME = "llama-3.3-70b-versatile"  
 
-if not OPENAI_API_KEY:
-    print("⚠️ WARNING: OPENAI_API_KEY not found in environment variables!")
+if not GROQ_API_KEY:
+    print("⚠️ WARNING: GROQ_API_KEY not found in environment variables!")
     print("   Please add it to your .env file")
 else:
-    print(f"✅ OpenAI API key loaded")
+    print(f"✅ Groq API key loaded")
     print(f"🤖 Using model: {MODEL_NAME}")
 
-# Initialize OpenAI client
-client = OpenAI(api_key=OPENAI_API_KEY)
+# Initialize Groq client
+client = Groq(api_key=GROQ_API_KEY)
 
 
 # ========================================
@@ -30,15 +30,22 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 def run_llm(prompt: str, max_new_tokens: int = 500) -> str:
     """
-    Run OpenAI GPT-5-nano for text generation.
+    Run Groq LLM for text generation.
+    
+    Args:
+        prompt: The input prompt/question with context
+        max_new_tokens: Maximum tokens to generate (default: 500)
+        
+    Returns:
+        Generated text response
     """
     
     try:
-        print(f"🤖 Running OpenAI GPT-5-nano...")
-        print(f"   Model: {MODEL_NAME}")
-        print(f"   Max completion tokens: {max_new_tokens}")
+        print(f"🤖 Running Groq LLM ({MODEL_NAME})...")
+        print(f"   Max tokens: {max_new_tokens}")
         print(f"   Prompt length: {len(prompt)} characters")
         
+        # Call Groq API
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
@@ -51,27 +58,13 @@ def run_llm(prompt: str, max_new_tokens: int = 500) -> str:
                     "content": prompt
                 }
             ],
-            max_completion_tokens=max_new_tokens,
+            max_tokens=max_new_tokens,
+            temperature=0.3,  # ✅ Groq supports temperature
+            top_p=0.9,        # ✅ Groq supports top_p
         )
         
-        # ✅ DEBUG: Print full response object
-        print(f"🔍 DEBUG - Full response:")
-        print(f"   Choices: {response.choices}")
-        print(f"   Finish reason: {response.choices[0].finish_reason}")
-        
         # Extract response
-        result = response.choices[0].message.content
-        
-        # ✅ DEBUG: Check if result is None or empty
-        print(f"🔍 DEBUG - Raw result type: {type(result)}")
-        print(f"🔍 DEBUG - Raw result value: '{result}'")
-        print(f"🔍 DEBUG - Raw result repr: {repr(result)}")
-        
-        if result is None:
-            print("⚠️ Response content is None!")
-            result = ""
-        
-        result = result.strip() if result else ""
+        result = response.choices[0].message.content.strip()
         
         # Get usage info
         usage = response.usage
@@ -83,11 +76,12 @@ def run_llm(prompt: str, max_new_tokens: int = 500) -> str:
         return result
         
     except Exception as e:
-        error_msg = f"❌ Error during OpenAI API call: {str(e)}"
+        error_msg = f"❌ Error during Groq API call: {str(e)}"
         print(error_msg)
         import traceback
         traceback.print_exc()
         return f"Error: {str(e)}"
+
 
 # ========================================
 # CHAT WITH CONTEXT FUNCTION
@@ -130,23 +124,20 @@ ANSWER:"""
 # ========================================
 
 def get_model_info():
-    """Get information about the OpenAI model"""
+    """Get information about the Groq model"""
     
     return {
-        "provider": "OpenAI",
+        "provider": "Groq",
         "model_name": MODEL_NAME,
-        "model_type": "GPT-5-nano",
-        "api_key_set": bool(OPENAI_API_KEY),
-        "max_tokens": 16384,  # Context window (verify this for GPT-5-nano)
-        "pricing": {
-            "input": "$0.150 per 1M tokens",  # Update with actual GPT-5-nano pricing
-            "output": "$0.600 per 1M tokens"
-        },
-        "limitations": {
-            "temperature": "Fixed at 1.0 (not customizable)",
-            "top_p": "Not supported",
-            "frequency_penalty": "Not supported",
-            "presence_penalty": "Not supported"
+        "model_type": "Llama 3.3 70B",
+        "api_key_set": bool(GROQ_API_KEY),
+        "max_tokens": 32768,  # Context window
+        "pricing": "Free tier available",
+        "features": {
+            "temperature": "Supported (0-2)",
+            "top_p": "Supported",
+            "streaming": "Supported",
+            "speed": "Very fast inference"
         }
     }
 
@@ -155,34 +146,34 @@ def get_model_info():
 # TEST FUNCTION
 # ========================================
 
-def test_openai_connection():
-    """Test if OpenAI API is working"""
+def test_groq_connection():
+    """Test if Groq API is working"""
     
     try:
-        print("🧪 Testing OpenAI connection...")
+        print("🧪 Testing Groq connection...")
         
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
                 {"role": "user", "content": "Say 'Hello, I am working!' if you can read this."}
             ],
-            max_completion_tokens=20  # ✅ Changed from max_tokens
+            max_tokens=20
         )
         
         result = response.choices[0].message.content
-        print(f"✅ OpenAI API is working!")
+        print(f"✅ Groq API is working!")
         print(f"   Response: {result}")
         return True
         
     except Exception as e:
-        print(f"❌ OpenAI API test failed: {e}")
+        print(f"❌ Groq API test failed: {e}")
         return False
 
 
 # Run test on import (optional)
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("OpenAI LLM Service - Connection Test")
+    print("Groq LLM Service - Connection Test")
     print("="*60 + "\n")
     
     info = get_model_info()
@@ -191,6 +182,6 @@ if __name__ == "__main__":
     print(f"Max Context: {info['max_tokens']} tokens\n")
     
     if info['api_key_set']:
-        test_openai_connection()
+        test_groq_connection()
     else:
-        print("⚠️ Please set OPENAI_API_KEY in your .env file")
+        print("⚠️ Please set GROQ_API_KEY in your .env file")
