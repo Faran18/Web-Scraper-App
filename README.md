@@ -174,25 +174,6 @@ The frontend will be running on **http://localhost:5173**.
 2. Configure the URL, email notification, and check interval.
 3. Receive email notifications when content changes with AI-generated summaries.
 
----
-
-## 📁 Project Structure
-
-```
-webscraper-ai/
-├── backend/
-│   ├── api/routes/          # API endpoints
-│   ├── core/                # LLM, Scheduler, VectorDB
-│   ├── models/              # Database models
-│   └── main.py              # FastAPI application
-├── frontend/
-│   ├── src/                 # Components, Pages, Services
-│   └── package.json
-├── data/                    # SQLite & ChromaDB storage
-├── requirements.txt
-└── README.md
-
-```
 
 ---
 
