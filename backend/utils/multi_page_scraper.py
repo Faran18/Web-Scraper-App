@@ -86,7 +86,16 @@ def scrape_multiple_pages(start_url: str, max_pages: int = 20,
             try:
                 print(f"🔍 Scraping ({len(visited_urls) + 1}/{max_pages}): {current_url}")
                 
-                page.goto(current_url, timeout=100000, wait_until="domcontentloaded")
+                # Short per-page timeout is deliberate: a failed page is
+                # already skipped and the crawl moves on (see except
+                # block below) — but only if it fails fast enough to not
+                # eat the whole job's overall time budget
+                # (MULTI_PAGE_TIMEOUT_SECONDS in scrape.py). A single page
+                # stuck for 100s can single-handedly blow that budget and
+                # cause the WHOLE job — including already-successfully-
+                # scraped pages — to get discarded when the outer timeout
+                # fires.
+                page.goto(current_url, timeout=20000, wait_until="domcontentloaded")
                 page.wait_for_timeout(1000)
                 
                 html_content = page.content()
