@@ -4,7 +4,7 @@ import { Send, ArrowLeft, Bot, User, Loader2, Plus, Link as LinkIcon, RotateCcw 
 import toast from 'react-hot-toast';
 import { agentService } from '../services/agentService';
 
-const SCRAPE_POLL_INTERVAL_MS = 3000;
+const SCRAPE_POLL_INTERVAL_MS = 8000; // slower on purpose -- polling competes with Chromium for the same thin CPU budget on Render's free tier
 const SCRAPE_POLL_TIMEOUT_MS = 5 * 60 * 1000; // give up polling after 5 min
 
 export default function ChatPage() {
