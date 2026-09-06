@@ -95,7 +95,7 @@ def scrape_multiple_pages(start_url: str, max_pages: int = 20,
                 # cause the WHOLE job — including already-successfully-
                 # scraped pages — to get discarded when the outer timeout
                 # fires.
-                page.goto(current_url, timeout=20000, wait_until="domcontentloaded")
+                page.goto(current_url, timeout=60000, wait_until="domcontentloaded")
                 page.wait_for_timeout(1000)
                 
                 html_content = page.content()
