@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlparse
 from backend.utils.playwright_scraper import extract_text_from_html
 import time
 import os
+import gc
 import psutil
 
 
@@ -95,7 +96,7 @@ def scrape_multiple_pages(start_url: str, max_pages: int = 20,
                 # cause the WHOLE job — including already-successfully-
                 # scraped pages — to get discarded when the outer timeout
                 # fires.
-                page.goto(current_url, timeout=60000, wait_until="domcontentloaded")
+                page.goto(current_url, timeout=40000, wait_until="domcontentloaded")
                 page.wait_for_timeout(1000)
                 
                 html_content = page.content()
@@ -132,7 +133,19 @@ def scrape_multiple_pages(start_url: str, max_pages: int = 20,
                         is_in_scope(absolute_url, root_prefix) and
                         not absolute_url.endswith(('.pdf', '.jpg', '.png', '.zip'))):
                         to_visit.append(absolute_url)
-                
+
+                # Explicitly drop references to this page's large objects
+                # (raw HTML, parsed tree, extracted text) instead of
+                # leaving them referenced until the next loop iteration
+                # overwrites the variable. This doesn't guarantee the OS
+                # sees freed memory (CPython/glibc often retain freed
+                # heap space for reuse rather than returning it), but it
+                # does let Python's own garbage collector reclaim these
+                # objects sooner rather than holding them for the rest
+                # of the loop's lifetime.
+                del html_content, text, soup, links
+                gc.collect()
+
                 time.sleep(0.5)  
                 
             except Exception as e:
@@ -146,6 +159,7 @@ def scrape_multiple_pages(start_url: str, max_pages: int = 20,
     
     total_chars = sum(p['char_count'] for p in pages_data)
 
+    gc.collect()
     _log_memory("end of scrape_multiple_pages")
     
     return {
